@@ -1,0 +1,7 @@
+{
+  "name": "@ipharmegy/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iPharmEGY Master Core",
+  "main": "index.js"
+}
