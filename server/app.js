@@ -5,6 +5,7 @@ import healthRoutes from "./routes/healthRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 import posRoutes from "./routes/posRoutes.js";
 import cloudRoutes from "./routes/cloudRoutes.js";
+import osRoutes from "./routes/osRoutes.js";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/pos", posRoutes);
 app.use("/api/cloud", cloudRoutes);
+app.use("/api/os-summary", osRoutes);
 
 app.listen(appConfig.port, () => {
   console.log(`${appConfig.appName} running on http://127.0.0.1:${appConfig.port}`);
