@@ -2,8 +2,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
-import { getTenantDb } from "../db/getTenantDb.js";
-
+import { getTenantDb } from "../modules/tenant-resolver/getTenantDb.js";
 const router = express.Router();
 
 const PARSED_FOLDER = "D:/iPharmEGY_OS/Parsed";
