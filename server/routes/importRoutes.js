@@ -2,7 +2,8 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
-import { getTenantDb } from "../modules/tenant-resolver/getTenantDb.js";
+import { getTenantDb } from "../db/dbFactory.js";
+
 const router = express.Router();
 
 const PARSED_FOLDER = "D:/iPharmEGY_OS/Parsed";
@@ -13,7 +14,7 @@ router.get("/run/:tenantCode", async (req, res) => {
   try {
     const files = fs
       .readdirSync(PARSED_FOLDER)
-      .filter((f) => f.endsWith(".csv"));
+      .filter((f) => f.toLowerCase().endsWith(".csv"));
 
     if (files.length === 0) {
       return res.json({
@@ -46,13 +47,32 @@ router.get("/run/:tenantCode", async (req, res) => {
     let inserted = 0;
 
     for (const row of rows) {
+      const itemName =
+        row.ItemName ||
+        row.itemName ||
+        row.name ||
+        row.Name ||
+        "";
+
+      const barcode =
+        row.Barcode ||
+        row.barcode ||
+        "";
+
+      if (!itemName) {
+        continue;
+      }
+
       await pool
         .request()
-        .input("name", row.name || "")
-        .input("barcode", row.barcode || "")
+        .input("ItemCode", row.ItemCode || row.itemCode || null)
+        .input("ItemName", itemName)
+        .input("Barcode", barcode)
+        .input("UnitPrice", row.UnitPrice || row.unitPrice || null)
+        .input("QtyOnHand", row.QtyOnHand || row.qtyOnHand || 0)
         .query(`
-          INSERT INTO products (name, barcode)
-          VALUES (@name, @barcode)
+          INSERT INTO dbo.Items (ItemCode, ItemName, Barcode, UnitPrice, QtyOnHand)
+          VALUES (@ItemCode, @ItemName, @Barcode, @UnitPrice, @QtyOnHand)
         `);
 
       inserted++;
