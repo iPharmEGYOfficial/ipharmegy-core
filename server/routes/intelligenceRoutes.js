@@ -171,4 +171,69 @@ router.get("/daily-sales/:tenantCode", async (req, res) => {
   }
 });
 
+/* =========================================
+   Reorder Forecast
+========================================= */
+router.get("/reorder/:tenantCode", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const data = await runQuery(
+      req.params.tenantCode,
+      `
+      SELECT TOP (${limit}) *
+      FROM dbo.vw_reorder_forecast
+      ORDER BY
+        CASE recommendation
+          WHEN N'OUT OF STOCK' THEN 1
+          WHEN N'URGENT ORDER' THEN 2
+          WHEN N'REORDER' THEN 3
+          WHEN N'OK' THEN 4
+          WHEN N'OVERSTOCK' THEN 5
+          ELSE 6
+        END,
+        days_of_stock_left ASC
+      `
+    );
+
+    res.json({
+      ok: true,
+      tenantCode: req.params.tenantCode,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    console.error("reorder intelligence error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/* =========================================
+   Negative Stock Audit
+========================================= */
+router.get("/negative-stock/:tenantCode", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const data = await runQuery(
+      req.params.tenantCode,
+      `
+      SELECT TOP (${limit}) *
+      FROM dbo.vw_negative_stock_audit
+      ORDER BY balance_qty ASC
+      `
+    );
+
+    res.json({
+      ok: true,
+      tenantCode: req.params.tenantCode,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    console.error("negative-stock intelligence error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 export default router;
