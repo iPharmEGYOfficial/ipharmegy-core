@@ -9,6 +9,7 @@ import posRoutes from "./routes/posRoutes.js";
 import cloudRoutes from "./routes/cloudRoutes.js";
 import osRoutes from "./routes/osRoutes.js";
 import importRoutes from "./routes/importRoutes.js";
+import intelligenceRoutes from "./routes/intelligenceRoutes.js";
 
 import tenantsRoutes from "./modules/tenants/tenants.js";
 import tenantResolverRoutes from "./modules/tenant-resolver/tenantResolverRoutes.js";
@@ -51,6 +52,8 @@ app.use("/api/cloud", cloudRoutes);
 app.use("/api/os-summary", osRoutes);
 
 app.use("/api/import", importRoutes);
+
+app.use("/api/intelligence", intelligenceRoutes);
 
 app.use("/api/tenants", tenantsRoutes);
 
