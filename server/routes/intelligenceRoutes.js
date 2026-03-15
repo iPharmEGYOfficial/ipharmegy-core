@@ -88,7 +88,7 @@ router.get("/dead-stock/:tenantCode", async (req, res) => {
 });
 
 /* =========================================
-   Low Stock
+   Low Stock Risk
 ========================================= */
 router.get("/low-stock/:tenantCode", async (req, res) => {
   try {
@@ -232,6 +232,144 @@ router.get("/negative-stock/:tenantCode", async (req, res) => {
     });
   } catch (error) {
     console.error("negative-stock intelligence error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/* =========================================
+   Purchase Gap Detector
+========================================= */
+router.get("/purchase-gap/:tenantCode", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const data = await runQuery(
+      req.params.tenantCode,
+      `
+      SELECT TOP (${limit}) *
+      FROM dbo.vw_purchase_gap_detector
+      ORDER BY missing_purchase_qty DESC, current_balance_qty ASC
+      `
+    );
+
+    res.json({
+      ok: true,
+      tenantCode: req.params.tenantCode,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    console.error("purchase-gap intelligence error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/* =========================================
+   Expiry Risk
+========================================= */
+router.get("/expiry-risk/:tenantCode", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const data = await runQuery(
+      req.params.tenantCode,
+      `
+      SELECT TOP (${limit}) *
+      FROM dbo.vw_expiry_intelligence
+      ORDER BY
+        CASE expiry_risk
+          WHEN N'EXPIRED' THEN 1
+          WHEN N'HIGH' THEN 2
+          WHEN N'MEDIUM' THEN 3
+          WHEN N'LOW' THEN 4
+          ELSE 5
+        END,
+        days_to_expiry ASC,
+        batch_balance_qty DESC
+      `
+    );
+
+    res.json({
+      ok: true,
+      tenantCode: req.params.tenantCode,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    console.error("expiry-risk intelligence error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/* =========================================
+   Slow Moving Stock
+========================================= */
+router.get("/slow-moving/:tenantCode", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const data = await runQuery(
+      req.params.tenantCode,
+      `
+      SELECT TOP (${limit}) *
+      FROM dbo.vw_slow_moving_stock
+      WHERE movement_status IN (N'DEAD', N'SLOW')
+      ORDER BY
+        CASE movement_status
+          WHEN N'DEAD' THEN 1
+          WHEN N'SLOW' THEN 2
+          ELSE 3
+        END,
+        balance_qty DESC,
+        sold_last_90_days ASC
+      `
+    );
+
+    res.json({
+      ok: true,
+      tenantCode: req.params.tenantCode,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    console.error("slow-moving intelligence error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/* =========================================
+   Smart Reorder Intelligence
+========================================= */
+router.get("/smart-reorder/:tenantCode", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const data = await runQuery(
+      req.params.tenantCode,
+      `
+      SELECT TOP (${limit}) *
+      FROM dbo.vw_smart_reorder_intelligence
+      WHERE reorder_status IN (N'ORDER NOW', N'URGENT', N'REORDER')
+        AND suggested_reorder_qty > 0
+      ORDER BY
+        CASE reorder_status
+          WHEN N'ORDER NOW' THEN 1
+          WHEN N'URGENT' THEN 2
+          WHEN N'REORDER' THEN 3
+          ELSE 4
+        END,
+        suggested_reorder_qty DESC
+      `
+    );
+
+    res.json({
+      ok: true,
+      tenantCode: req.params.tenantCode,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    console.error("smart-reorder intelligence error:", error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
